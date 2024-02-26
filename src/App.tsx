@@ -1,35 +1,78 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import { useEffect, useState } from "react";
+
+import styles from "./App.module.css";
+import { DAYS_OF_WEEK, TIMES } from "./constants";
+
+const heatMapColorForValue = (value: number, maxValue: number) => {
+  const h = (1.0 - value / maxValue) * 90;
+  return "hsl(" + h + ", 100%, 50%)";
+};
 
 function App() {
-  const [count, setCount] = useState(0)
+  const [result, setResult] = useState<{
+    maxValue: number;
+    timeKeysMap: Map<string, number>;
+  } | null>(null);
+
+  useEffect(() => {
+    const myWorker = new Worker(new URL("worker.ts", import.meta.url), {
+      type: "module",
+    });
+    myWorker.onmessage = function (event) {
+      console.log("Received result from worker:", event.data);
+      setResult(event.data);
+    };
+    if (myWorker) {
+      setTimeout(() => {
+        myWorker.postMessage(5);
+      }, 200);
+    }
+    return () => {
+      myWorker.terminate();
+    };
+  }, []);
+
+  if (!result) {
+    return <div>Loading...</div>;
+  }
 
   return (
     <>
-      <div>
-        <a href="https://vitejs.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
+      <div className={styles.wrapper}>
+        <div className={styles.daysWrapper}>
+          {DAYS_OF_WEEK.map((item) => {
+            return <div>{item}</div>;
+          })}
+        </div>
+        <div>
+          <div className={styles.gridWrapper}>
+            {result &&
+              [...result.timeKeysMap].map((item) => {
+                const backgroundColor = heatMapColorForValue(
+                  item[1],
+                  result.maxValue
+                );
+                return (
+                  <div className={styles.bucket}>
+                    <div
+                      className={styles.bucketValue}
+                      style={{
+                        backgroundColor,
+                      }}
+                    ></div>
+                  </div>
+                );
+              })}
+          </div>
+          <div className={styles.timeWrapper}>
+            {TIMES.map((item) => {
+              return <div>{item}</div>;
+            })}
+          </div>
+        </div>
       </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
     </>
-  )
+  );
 }
 
-export default App
+export default App;
