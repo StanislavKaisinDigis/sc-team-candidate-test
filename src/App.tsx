@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-
 import styles from "./App.module.css";
 import { DAYS_OF_WEEK, TIMES } from "./constants";
 
@@ -19,7 +18,6 @@ function App() {
       type: "module",
     });
     myWorker.onmessage = function (event) {
-      console.log("Received result from worker:", event.data);
       setResult(event.data);
     };
     if (myWorker) {
@@ -41,7 +39,7 @@ function App() {
       <div className={styles.wrapper}>
         <div className={styles.daysWrapper}>
           {DAYS_OF_WEEK.map((item) => {
-            return <div>{item}</div>;
+            return <div key={item}>{item}</div>;
           })}
         </div>
         <div>
@@ -53,7 +51,7 @@ function App() {
                   result.maxValue
                 );
                 return (
-                  <div className={styles.bucket}>
+                  <div className={styles.bucket} key={item[0]}>
                     <div
                       className={styles.bucketValue}
                       style={{
@@ -66,7 +64,7 @@ function App() {
           </div>
           <div className={styles.timeWrapper}>
             {TIMES.map((item) => {
-              return <div>{item}</div>;
+              return <div key={item}>{item}</div>;
             })}
           </div>
         </div>
